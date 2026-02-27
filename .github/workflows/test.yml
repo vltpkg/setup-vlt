@@ -10,6 +10,9 @@ jobs:
   test:
     name: Test on ${{ matrix.os }}
     runs-on: ${{ matrix.os }}
+    defaults:
+      run:
+        shell: bash
 
     strategy:
       matrix:
@@ -41,7 +44,6 @@ jobs:
         run: |
           vlt --help || echo "vlt --help failed"
           which vlt || echo "vlt not found in PATH"
-          ls -la $(npm bin -g)/ || echo "Could not list global bin directory"
 
       - name: Check npm and node versions
         run: |
