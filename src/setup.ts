@@ -107,12 +107,33 @@ async function installVlt(version: string, registryUrl?: string): Promise<void> 
 
   core.info(`Installing vlt@${version}...`);
 
-  try {
-    await exec.exec('npm', args);
-    core.info('✅ vlt installed successfully');
-  } catch (error) {
-    throw new Error(`Failed to install vlt@${version}: ${error}`);
+  // Use ignoreReturnCode because npm may exit with code 1 due to
+  // EBADENGINE warnings (vlt requires Node >=22.9.0 but the action
+  // runner may have an older Node). The install still succeeds.
+  const result = await exec.getExecOutput('npm', args, {
+    ignoreReturnCode: true,
+  });
+
+  if (result.exitCode !== 0) {
+    // Check if vlt was actually installed despite the non-zero exit
+    const verifyResult = await exec.getExecOutput('vlt', ['--version'], {
+      ignoreReturnCode: true,
+      silent: true,
+    }).catch(() => null);
+
+    if (verifyResult && verifyResult.exitCode === 0) {
+      core.warning(
+        `npm exited with code ${result.exitCode} but vlt was installed successfully. ` +
+        `This is likely due to engine compatibility warnings.`
+      );
+    } else {
+      throw new Error(
+        `Failed to install vlt@${version}: npm exited with code ${result.exitCode}\n${result.stderr}`
+      );
+    }
   }
+
+  core.info('✅ vlt installed successfully');
 }
 
 /**
