@@ -1,0 +1,136 @@
+name: Integration Tests
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  test:
+    name: Test on ${{ matrix.os }}
+    runs-on: ${{ matrix.os }}
+
+    strategy:
+      matrix:
+        os: [ubuntu-latest, macos-latest, windows-latest]
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Test setup-vlt with latest version
+        uses: ./
+        id: setup-latest
+        with:
+          vlt-version: 'latest'
+
+      - name: Verify vlt installation (latest)
+        run: |
+          vlt --version
+          echo "Installed version: ${{ steps.setup-latest.outputs.vlt-version }}"
+          echo "vlt path: ${{ steps.setup-latest.outputs.vlt-path }}"
+          echo "Cache hit: ${{ steps.setup-latest.outputs.cache-hit }}"
+
+      - name: Test vlt basic functionality
+        run: |
+          vlt --help
+          vlr --help || true  # vlr might not have help
+          vlx --help || true  # vlx might not have help
+
+      - name: Test setup-vlt with specific version
+        uses: ./
+        id: setup-specific
+        with:
+          vlt-version: '1.0.0-rc.18'
+
+      - name: Verify vlt installation (specific version)
+        run: |
+          vlt --version
+          echo "Installed version: ${{ steps.setup-specific.outputs.vlt-version }}"
+
+  test-version-file:
+    name: Test version file support
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Create .vlt-version file
+        run: echo '1.0.0-rc.18' > .vlt-version
+
+      - name: Test setup-vlt with version file
+        uses: ./
+        id: setup-version-file
+        with:
+          vlt-version-file: '.vlt-version'
+
+      - name: Verify version from file
+        run: |
+          vlt --version
+          echo "Installed version: ${{ steps.setup-version-file.outputs.vlt-version }}"
+
+      - name: Create package.json with engines.vlt
+        run: |
+          cat > package.json << 'EOF'
+          {
+            "name": "test-package",
+            "engines": {
+              "vlt": "^1.0.0"
+            }
+          }
+          EOF
+
+      - name: Test setup-vlt with package.json
+        uses: ./
+        id: setup-package-json
+        with:
+          vlt-version-file: 'package.json'
+
+      - name: Verify version from package.json
+        run: |
+          vlt --version
+          echo "Installed version: ${{ steps.setup-package-json.outputs.vlt-version }}"
+
+  test-caching:
+    name: Test caching functionality
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Test setup-vlt with caching (first run)
+        uses: ./
+        id: setup-cache-1
+        with:
+          vlt-version: '1.0.0-rc.18'
+
+      - name: Verify first installation
+        run: |
+          echo "First run cache hit: ${{ steps.setup-cache-1.outputs.cache-hit }}"
+          vlt --version
+
+      - name: Test setup-vlt with caching (second run)
+        uses: ./
+        id: setup-cache-2
+        with:
+          vlt-version: '1.0.0-rc.18'
+
+      - name: Verify cache behavior
+        run: |
+          echo "Second run cache hit: ${{ steps.setup-cache-2.outputs.cache-hit }}"
+          vlt --version
+
+      - name: Test setup-vlt with no-cache
+        uses: ./
+        id: setup-no-cache
+        with:
+          vlt-version: '1.0.0-rc.18'
+          no-cache: 'true'
+
+      - name: Verify no-cache behavior
+        run: |
+          echo "No-cache run cache hit: ${{ steps.setup-no-cache.outputs.cache-hit }}"
+          vlt --version

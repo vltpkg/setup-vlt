@@ -1,0 +1,41 @@
+name: Setup vlt
+description: Download, install, and setup vlt to your path.
+author: vltpkg
+
+branding:
+  icon: package
+  color: purple
+
+inputs:
+  vlt-version:
+    description: 'The version of vlt to install (e.g. "latest", "1.0.0-rc.18", "1.x")'
+    required: false
+    default: 'latest'
+  vlt-version-file:
+    description: 'File to read vlt version from (e.g. "package.json", ".vlt-version")'
+    required: false
+  registry-url:
+    description: 'The npm registry URL to use for installing vlt'
+    required: false
+  no-cache:
+    description: 'Disable caching of vlt installation'
+    required: false
+    default: 'false'
+  token:
+    description: 'GitHub token for API requests (helps avoid rate limiting)'
+    required: false
+    default: ${{ github.token }}
+
+outputs:
+  vlt-version:
+    description: 'The version of vlt that was installed'
+  vlt-path:
+    description: 'The path to the vlt executable'
+  cache-hit:
+    description: 'Whether the vlt installation was restored from cache'
+
+runs:
+  using: 'node20'
+  main: 'dist/setup/index.js'
+  post: 'dist/cache-save/index.js'
+  post-if: success()

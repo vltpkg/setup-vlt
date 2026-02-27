@@ -1,0 +1,40 @@
+# Dependencies
+node_modules/
+
+# Build outputs (except dist/ which is committed for GitHub Actions)
+lib/
+coverage/
+
+# Runtime files
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# OS generated files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# IDEs
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# Temporary files
+*.tmp
+*.temp
+
+# Environment variables
+.env
+.env.local
+.env.*.local
+
+# Test outputs
+junit.xml
