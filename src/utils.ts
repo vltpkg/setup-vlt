@@ -14,6 +14,7 @@ export async function getNpmGlobalPath(): Promise<string> {
       },
     },
     silent: true,
+    ignoreReturnCode: true,
   };
 
   await exec.exec('npm', ['root', '-g'], options);
@@ -32,8 +33,19 @@ export async function getNpmGlobalBinPath(): Promise<string> {
       },
     },
     silent: true,
+    ignoreReturnCode: true,
   };
 
+  // Try `npm prefix -g` + /bin first (works on all npm versions)
+  await exec.exec('npm', ['prefix', '-g'], options);
+  const prefix = output.trim();
+  if (prefix) {
+    const binDir = process.platform === 'win32' ? prefix : `${prefix}/bin`;
+    return binDir;
+  }
+
+  // Fallback: npm bin -g (deprecated in npm 10+, may exit non-zero)
+  output = '';
   await exec.exec('npm', ['bin', '-g'], options);
   return output.trim();
 }
