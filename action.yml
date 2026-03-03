@@ -4,7 +4,7 @@ author: vltpkg
 
 branding:
   icon: package
-  color: purple
+  color: black
 
 inputs:
   vlt-version:
